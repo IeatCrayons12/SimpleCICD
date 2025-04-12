@@ -13,19 +13,19 @@ pipeline {
             }
         }
 
-        stage('Setup Docker CLI') {
-            steps {
-                sh '''
-                    if ! command -v docker > /dev/null; then
-                        echo "📦 Installing Docker CLI..."
-                        apt update && apt install -y docker.io
-                        echo "✅ Docker CLI installed."
-                    else
-                        echo "✔️ Docker CLI already exists."
-                    fi
-                '''
-            }
-        }
+        // stage('Setup Docker CLI') {
+        //     steps {
+        //         sh '''
+        //             if ! command -v docker > /dev/null; then
+        //                 echo "📦 Installing Docker CLI..."
+        //                 apt update && apt install -y docker.io
+        //                 echo "✅ Docker CLI installed."
+        //             else
+        //                 echo "✔️ Docker CLI already exists."
+        //             fi
+        //         '''
+        //     }
+        // }
 
 
         stage('Run Unit Tests') {
