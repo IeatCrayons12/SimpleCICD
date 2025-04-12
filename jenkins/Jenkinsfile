@@ -5,7 +5,7 @@ pipeline {
         SONARQUBE_ENV = 'SonarQube'
     }
 
-    stage {
+    stages {
         stage('Checkout') {
             steps {
                   echo '🔄 Cloning source code...'
