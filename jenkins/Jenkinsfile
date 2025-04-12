@@ -8,12 +8,12 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
-                  echo '🔄 Cloning source code...'
-                 checkout scm
+                echo '🔄 Cloning source code...'
+                checkout scm
             }
         }
 
-          stage('Run Unit Tests') {
+        stage('Run Unit Tests') {
             steps {
                 echo '🧪 Running Go unit tests...'
                 dir('app') {
@@ -22,40 +22,41 @@ pipeline {
             }
         }
 
-         stage('OWASP Dependency Check') {
+        stage('OWASP Dependency Check') {
             steps {
                 echo '🔍 Running OWASP Dependency Check...'
-                sh '''
-                docker run --rm \
-                  -v $(pwd)/app:/src \
-                  -v $(pwd)/app/odc-reports:/report \
-                  owasp/dependency-check \
-                  --project "goapp" \
-                  --scan /src \
-                  --format HTML \
-                  --out /report
-                '''
+                sh """
+                    docker run --rm \
+                      -v \$PWD/app:/src \
+                      -v \$PWD/app/odc-reports:/report \
+                      owasp/dependency-check \
+                      --project "goapp" \
+                      --scan /src \
+                      --format HTML \
+                      --out /report
+                """
                 archiveArtifacts artifacts: 'app/odc-reports/**/*.html', fingerprint: true
             }
         }
 
-             stage('SonarQube Analysis') {
+        stage('SonarQube Analysis') {
             steps {
                 echo '📊 Running SonarQube static code analysis...'
                 dir('app') {
                     withSonarQubeEnv("${SONARQUBE_ENV}") {
-                        sh '''
-                        sonar-scanner \
-                          -Dsonar.projectKey=go_project \
-                          -Dsonar.sources=. \
-                          -Dsonar.host.url=$SONAR_HOST_URL \
-                          -Dsonar.login=$SONAR_AUTH_TOKEN
-                        '''
+                        sh """
+                            sonar-scanner \
+                              -Dsonar.projectKey=go_project \
+                              -Dsonar.sources=. \
+                              -Dsonar.host.url=\$SONAR_HOST_URL \
+                              -Dsonar.login=\$SONAR_AUTH_TOKEN
+                        """
                     }
                 }
             }
         }
-         stage('Build Docker Image') {
+
+        stage('Build Docker Image') {
             steps {
                 echo '🐳 Building Docker image...'
                 dir('app') {
@@ -64,16 +65,15 @@ pipeline {
             }
         }
 
-
         stage('Push Docker Image to DockerHub') {
             steps {
                 echo '☁️ Pushing Docker image to DockerHub...'
                 withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                    docker login -u $DOCKER_USER -p $DOCKER_PASS
-                    docker tag goapp:latest $DOCKER_USER/goapp:latest
-                    docker push $DOCKER_USER/goapp:latest
-                    '''
+                    sh """
+                        docker login -u \$DOCKER_USER -p \$DOCKER_PASS
+                        docker tag goapp:latest \$DOCKER_USER/goapp:latest
+                        docker push \$DOCKER_USER/goapp:latest
+                    """
                 }
             }
         }
@@ -82,13 +82,12 @@ pipeline {
             steps {
                 echo '🚀 Deploying to Kubernetes...'
                 dir('k8s') {
-                    sh '''
-                    kubectl apply -f deployment.yaml
-                    kubectl apply -f service.yaml
-                    '''
+                    sh """
+                        kubectl apply -f deployment.yaml
+                        kubectl apply -f service.yaml
+                    """
                 }
             }
         }
     }
-    
 }
