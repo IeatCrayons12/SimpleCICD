@@ -8,6 +8,8 @@ pipeline {
     stages {
         stage('Checkout') {
             steps {
+                echo '🧹 Cleaning workspace before fresh checkout...'
+                deleteDir()
                 echo '🔄 Cloning source code...'
                 checkout scm
             }
