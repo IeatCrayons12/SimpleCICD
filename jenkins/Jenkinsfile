@@ -6,6 +6,12 @@ pipeline {
     }
 
     stages {
+        stage('Checkout') {
+            steps {
+                echo '🔄 Cloning source code...'
+                checkout scm
+            }
+        }
 
         stage('Setup Docker CLI') {
             steps {
@@ -21,12 +27,6 @@ pipeline {
             }
         }
 
-        stage('Checkout') {
-            steps {
-                echo '🔄 Cloning source code...'
-                checkout scm
-            }
-        }
 
         stage('Run Unit Tests') {
             agent {
