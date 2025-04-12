@@ -36,6 +36,7 @@ pipeline {
             }
             steps {
                 echo '🧪 Running Go unit tests...'
+                checkout scm 
                 dir('app') {
                     sh 'go test ./... -v'
                 }
