@@ -6,6 +6,21 @@ pipeline {
     }
 
     stages {
+
+        stage('Setup Docker CLI') {
+            steps {
+                sh '''
+                    if ! command -v docker > /dev/null; then
+                        echo "📦 Installing Docker CLI..."
+                        apt update && apt install -y docker.io
+                        echo "✅ Docker CLI installed."
+                    else
+                        echo "✔️ Docker CLI already exists."
+                    fi
+                '''
+            }
+        }
+
         stage('Checkout') {
             steps {
                 echo '🔄 Cloning source code...'
@@ -15,9 +30,9 @@ pipeline {
 
         stage('Run Unit Tests') {
             agent {
-              docker {
-               image 'golang:1.20'
-            }
+                docker {
+                    image 'golang:1.20'
+                }
             }
             steps {
                 echo '🧪 Running Go unit tests...'
@@ -31,13 +46,13 @@ pipeline {
             steps {
                 echo '🔍 Running OWASP Dependency Check...'
                 sh """
-                    docker run --rm \
-                      -v \$PWD/app:/src \
-                      -v \$PWD/app/odc-reports:/report \
-                      owasp/dependency-check \
-                      --project "goapp" \
-                      --scan /src \
-                      --format HTML \
+                    docker run --rm \\
+                      -v \$PWD/app:/src \\
+                      -v \$PWD/app/odc-reports:/report \\
+                      owasp/dependency-check \\
+                      --project "goapp" \\
+                      --scan /src \\
+                      --format HTML \\
                       --out /report
                 """
                 archiveArtifacts artifacts: 'app/odc-reports/**/*.html', fingerprint: true
@@ -50,10 +65,10 @@ pipeline {
                 dir('app') {
                     withSonarQubeEnv("${SONARQUBE_ENV}") {
                         sh """
-                            sonar-scanner \
-                              -Dsonar.projectKey=go_project \
-                              -Dsonar.sources=. \
-                              -Dsonar.host.url=\$SONAR_HOST_URL \
+                            sonar-scanner \\
+                              -Dsonar.projectKey=go_project \\
+                              -Dsonar.sources=. \\
+                              -Dsonar.host.url=\$SONAR_HOST_URL \\
                               -Dsonar.login=\$SONAR_AUTH_TOKEN
                         """
                     }
