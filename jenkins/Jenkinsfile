@@ -117,6 +117,15 @@ pipeline {
                         kubectl version --client
                     fi
 
+                    echo "🧪 Checking if KUBECONFIG is a valid file..."
+                    if [ ! -f "$KUBECONFIG" ]; then
+                        echo "❌ ERROR: $KUBECONFIG is not a file (maybe a dir or missing)"
+                        ls -ld "$KUBECONFIG"
+                        exit 1
+                    else
+                        echo "✅ KUBECONFIG looks good."
+                    fi
+
                     echo "🌐 Checking cluster connectivity..."
                     kubectl get nodes || {
                         echo "❌ Cannot connect to Kubernetes cluster!"
