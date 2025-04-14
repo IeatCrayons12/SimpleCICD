@@ -44,31 +44,31 @@ pipeline {
             }
         }
 
-        //  OWASP Dependency-Check 
-        /*
-        stage('OWASP Dependency Check') {
-            steps {
-                echo '🔍 Running OWASP Dependency Check...'
-                withCredentials([string(credentialsId: 'nvd-api-key-owasp', variable: 'NVD_API_KEY')]) {
-                    sh """
-                        docker run --rm \
-                          -v \$PWD/app:/src \
-                          -v \$PWD/app/odc-reports:/report \
-                          -v \$PWD/odc-data:/usr/share/dependency-check/data \
-                          owasp/dependency-check \
-                          --project "goapp" \
-                          --scan /src \
-                          --format HTML \
-                          --out /report \
-                          --nvdApiKey \$NVD_API_KEY
-                    """
-                }
-                archiveArtifacts artifacts: 'app/odc-reports/**/*.html', fingerprint: true
-            }
-        }
-        */
+        // 🔒 OWASP Dependency-Check (Kept for audit/history visibility)
+        // /*
+        // stage('OWASP Dependency Check') {
+        //     steps {
+        //         echo '🔍 Running OWASP Dependency Check...'
+        //         withCredentials([string(credentialsId: 'nvd-api-key-owasp', variable: 'NVD_API_KEY')]) {
+        //             sh """
+        //                 docker run --rm \
+        //                   -v \$PWD/app:/src \
+        //                   -v \$PWD/app/odc-reports:/report \
+        //                   -v \$PWD/odc-data:/usr/share/dependency-check/data \
+        //                   owasp/dependency-check \
+        //                   --project "goapp" \
+        //                   --scan /src \
+        //                   --format HTML \
+        //                   --out /report \
+        //                   --nvdApiKey \$NVD_API_KEY
+        //             """
+        //         }
+        //         archiveArtifacts artifacts: 'app/odc-reports/**/*.html', fingerprint: true
+        //     }
+        // }
+        // */
 
-        // ✅ Trivy Vulnerability Scan 
+        // ✅ Trivy Vulnerability Scan (Preferred for real-world pipelines)
         stage('Trivy Scan') {
             steps {
                 echo '🛡️ Running Trivy vulnerability scan on Docker image...'
