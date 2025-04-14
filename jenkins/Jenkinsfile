@@ -88,37 +88,13 @@ pipeline {
             }
         }
 
-        // Optional: Commented out until kube access is stable
-        /*
-        stage('Bootstrap Service Account') {
-            steps {
-                echo '🔐 Bootstrapping Kubernetes ServiceAccount...'
-                sh '''
-                    echo "📋 Checking cluster access..."
-                    kubectl config current-context || {
-                        echo "❌ No current context in kubeconfig!" >&2
-                        exit 1
-                    }
-
-                    kubectl get nodes || {
-                        echo "❌ Cannot connect to the Kubernetes cluster!" >&2
-                        exit 1
-                    }
-
-                    echo "📄 Applying service account YAML..."
-                    kubectl apply -f k8s/jenkins-sa.yaml
-                '''
-            }
-        }
-        */
-
         stage('Verify Helm & Cluster') {
             steps {
                 echo '🔍 Verifying Helm and Kubernetes connectivity...'
                 sh '''
                     if ! command -v helm > /dev/null; then
                         echo "❌ Helm not found. Installing..."
-                        curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+                        curl -sSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
                     else
                         echo "✔️ Helm already exists."
                         helm version
@@ -126,15 +102,26 @@ pipeline {
 
                     if ! command -v kubectl > /dev/null; then
                         echo "❌ kubectl not found. Installing..."
-                        curl -LO "https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                        ARCH=$(uname -m)
+                        if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
+                          ARCH_TYPE="arm64"
+                        else
+                          ARCH_TYPE="amd64"
+                        fi
+                        VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+                        curl -LO https://dl.k8s.io/release/$VERSION/bin/linux/$ARCH_TYPE/kubectl
                         chmod +x kubectl && mv kubectl /usr/local/bin/
+                        echo "✅ kubectl installed."
                     else
                         echo "✔️ kubectl already exists."
                         kubectl version --client
                     fi
 
                     echo "🌐 Checking cluster connectivity..."
-                    kubectl get nodes
+                    kubectl get nodes || {
+                        echo "❌ Cannot connect to Kubernetes cluster!"
+                        exit 1
+                    }
                 '''
             }
         }
@@ -149,6 +136,15 @@ pipeline {
                       --wait
                 '''
             }
+        }
+    }
+
+    post {
+        success {
+            echo '🎉 Deployment pipeline completed successfully!'
+        }
+        failure {
+            echo '❌ Deployment pipeline failed.'
         }
     }
 }
