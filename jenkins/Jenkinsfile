@@ -103,8 +103,20 @@ pipeline {
                      helm version
                      fi
 
-                     # Check if kubectl can reach the cluster
+                       # ✅ Install kubectl if missing
+                     if ! command -v kubectl > /dev/null; then
+                     echo "❌ kubectl not found. Installing..."
+                     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
+                     chmod +x kubectl
+                     mv kubectl /usr/local/bin/
+                     echo "✅ kubectl installed."
+                     else
+                     echo "✔️ kubectl already exists."
                      kubectl version --client
+                     fi
+
+                     # 🔍 Check if Jenkins can access the cluster
+                     echo "🌐 Checking cluster connectivity..."
                      kubectl get nodes
                   '''
             }
