@@ -78,7 +78,7 @@ pipeline {
                       aquasec/trivy image goapp:latest \
                       --exit-code 0 \
                       --format table \
-                      --output /root/reports/trivy-report.txt
+                      --output /app/trivy-output/trivy-report.txt
                 '''
                 archiveArtifacts artifacts: 'trivy-output/trivy-report.txt', fingerprint: true
             }
