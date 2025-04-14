@@ -31,16 +31,13 @@ pipeline {
         }
 
         stage('Run Unit Tests') {
-            agent {
-                docker {
-                    image 'golang:1.24'
-                }
-            }
             steps {
                 echo '🧪 Running Go unit tests...'
                 checkout scm
                 dir('app') {
-                    sh 'go test ./... -v'
+                    sh '''
+                        docker run --rm -v $(pwd):/app -w /app golang:1.24 go test ./... -v
+                    '''
                 }
             }
         }
