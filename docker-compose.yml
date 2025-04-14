@@ -10,8 +10,9 @@ services:
       - "50000:50000"      # Agent port
     volumes:
       - jenkins_home:/var/jenkins_home
-      - ~/.kube:/root/.kube                              # Optional: if Jenkins needs full kube folder
-      - ~/.kube/config:/var/jenkins_home/kubeconfig.yaml # ✅ Required: kubeconfig path
+      - ~/.kube:/root/.kube                              # Mount local kube config folder
+      - ~/.minikube:/root/.minikube                      # ✅ Mount Minikube certs (fixes cluster access error)
+      - ~/.kube/config:/var/jenkins_home/kubeconfig.yaml # Explicit kubeconfig mount path
       - /var/run/docker.sock:/var/run/docker.sock        # Allow Docker access from Jenkins
 
   sonarqube:

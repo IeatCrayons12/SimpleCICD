@@ -3,6 +3,7 @@ pipeline {
 
     environment {
         SONARQUBE_ENV = 'SonarQube'
+        KUBECONFIG = '/var/jenkins_home/kubeconfig.yaml'
     }
 
     stages {
@@ -50,7 +51,6 @@ pipeline {
                 dir('app') {
                     withSonarQubeEnv("${SONARQUBE_ENV}") {
                         sh '''
-                            pwd
                             docker run --rm \
                               -v $(pwd):/usr/src \
                               -w /usr/src \
@@ -88,26 +88,29 @@ pipeline {
             }
         }
 
+        // Optional: Commented out until kube access is stable
+        /*
         stage('Bootstrap Service Account') {
             steps {
                 echo '🔐 Bootstrapping Kubernetes ServiceAccount...'
                 sh '''
-                echo "📋 Checking cluster access..."
-                kubectl config current-context || {
-                echo "❌ No current context in kubeconfig!" >&2
-                exit 1
-                }
+                    echo "📋 Checking cluster access..."
+                    kubectl config current-context || {
+                        echo "❌ No current context in kubeconfig!" >&2
+                        exit 1
+                    }
 
-                kubectl get nodes || {
-                echo "❌ Cannot connect to the Kubernetes cluster!" >&2
-                exit 1
-                }
+                    kubectl get nodes || {
+                        echo "❌ Cannot connect to the Kubernetes cluster!" >&2
+                        exit 1
+                    }
 
-                echo "📄 Applying service account YAML..."
-                kubectl apply -f k8s/jenkins-sa.yaml¡
+                    echo "📄 Applying service account YAML..."
+                    kubectl apply -f k8s/jenkins-sa.yaml
                 '''
             }
         }
+        */
 
         stage('Verify Helm & Cluster') {
             steps {
@@ -116,7 +119,6 @@ pipeline {
                     if ! command -v helm > /dev/null; then
                         echo "❌ Helm not found. Installing..."
                         curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-                        echo "✅ Helm installed."
                     else
                         echo "✔️ Helm already exists."
                         helm version
@@ -124,17 +126,14 @@ pipeline {
 
                     if ! command -v kubectl > /dev/null; then
                         echo "❌ kubectl not found. Installing..."
-                        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
-                        chmod +x kubectl
-                        mv kubectl /usr/local/bin/
-                        echo "✅ kubectl installed."
+                        curl -LO "https://dl.k8s.io/release/$(curl -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                        chmod +x kubectl && mv kubectl /usr/local/bin/
                     else
                         echo "✔️ kubectl already exists."
                         kubectl version --client
                     fi
 
                     echo "🌐 Checking cluster connectivity..."
-                    export KUBECONFIG=/var/jenkins_home/kubeconfig.yaml
                     kubectl get nodes
                 '''
             }
@@ -145,9 +144,9 @@ pipeline {
                 echo '🚀 Deploying to Helm...'
                 sh '''
                     helm upgrade --install goapp charts/goapp \
-                    --namespace default \
-                    --create-namespace \
-                    --wait
+                      --namespace default \
+                      --create-namespace \
+                      --wait
                 '''
             }
         }
