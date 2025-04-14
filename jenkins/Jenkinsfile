@@ -89,15 +89,15 @@ pipeline {
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy to Helm') {
             steps {
-                echo '🚀 Deploying to Kubernetes...'
-                dir('k8s') {
+                echo '🚀 Deploying to Helm...'
                     sh '''
-                        kubectl apply -f deployment.yaml
-                        kubectl apply -f service.yaml
+                    helm upgrade --install goapp charts/goapp \
+                    --namespace default \
+                    --create-namespace \
+                    --wait
                     '''
-                }
             }
         }
     }
