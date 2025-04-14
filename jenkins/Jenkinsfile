@@ -117,6 +117,7 @@ pipeline {
 
                      # 🔍 Check if Jenkins can access the cluster
                      echo "🌐 Checking cluster connectivity..."
+                     export KUBECONFIG=/var/jenkins_home/kubeconfig.yaml
                      kubectl get nodes
                   '''
             }
