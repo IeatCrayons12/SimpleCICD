@@ -44,37 +44,42 @@ pipeline {
             }
         }
 
-        // 🔒 OWASP Dependency-Check 
-        // /*
-        // stage('OWASP Dependency Check') {
-        //     steps {
-        //         echo '🔍 Running OWASP Dependency Check...'
-        //         withCredentials([string(credentialsId: 'nvd-api-key-owasp', variable: 'NVD_API_KEY')]) {
-        //             sh """
-        //                 docker run --rm \
-        //                   -v \$PWD/app:/src \
-        //                   -v \$PWD/app/odc-reports:/report \
-        //                   -v \$PWD/odc-data:/usr/share/dependency-check/data \
-        //                   owasp/dependency-check \
-        //                   --project "goapp" \
-        //                   --scan /src \
-        //                   --format HTML \
-        //                   --out /report \
-        //                   --nvdApiKey \$NVD_API_KEY
-        //             """
-        //         }
-        //         archiveArtifacts artifacts: 'app/odc-reports/**/*.html', fingerprint: true
-        //     }
-        // }
-        // */
+        // 🔒 (Optional) Preserved for future use or recruiter showcase
+        /*
+        stage('OWASP Dependency Check') {
+            steps {
+                echo '🔍 Running OWASP Dependency Check...'
+                withCredentials([string(credentialsId: 'nvd-api-key-owasp', variable: 'NVD_API_KEY')]) {
+                    sh """
+                        docker run --rm \
+                          -v \$PWD/app:/src \
+                          -v \$PWD/app/odc-reports:/report \
+                          -v \$PWD/odc-data:/usr/share/dependency-check/data \
+                          owasp/dependency-check \
+                          --project "goapp" \
+                          --scan /src \
+                          --format HTML \
+                          --out /report \
+                          --nvdApiKey \$NVD_API_KEY
+                    """
+                }
+                archiveArtifacts artifacts: 'app/odc-reports/**/*.html', fingerprint: true
+            }
+        }
+        */
 
-        // ✅ Trivy Vulnerability Scan 
         stage('Trivy Scan') {
             steps {
                 echo '🛡️ Running Trivy vulnerability scan on Docker image...'
                 sh '''
                     docker build -t goapp:latest ./app
-                    docker run --rm aquasec/trivy image goapp:latest --exit-code 0 --format table --output trivy-report.txt
+                    docker run --rm \
+                      -v /var/run/docker.sock:/var/run/docker.sock \
+                      -v $(pwd):/app \
+                      aquasec/trivy image goapp:latest \
+                      --exit-code 0 \
+                      --format table \
+                      --output trivy-report.txt
                 '''
                 archiveArtifacts artifacts: 'trivy-report.txt', fingerprint: true
             }
@@ -132,3 +137,4 @@ pipeline {
         }
     }
 }
+
