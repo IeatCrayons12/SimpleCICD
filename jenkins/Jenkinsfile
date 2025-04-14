@@ -89,6 +89,16 @@ pipeline {
             }
         }
 
+        stage('Deploy Jenkins SA via Helm') {
+            steps {
+                echo '🔐 Deploying ServiceAccount using Helm chart...'
+                   sh '''
+                      helm upgrade --install my-app ./charts/my-app \
+                      --set namespace=default
+                   '''
+                  }
+        }
+
         stage('Verify Helm & Cluster') {
             steps {
                 echo '🔍 Verifying Helm and Kubernetes connectivity...'
