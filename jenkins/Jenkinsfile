@@ -73,6 +73,7 @@ pipeline {
                 echo '🛡️ Running Trivy vulnerability scan on Docker image...'
                 sh '''
                     docker build -t goapp:latest ./app
+                    mkdir -p trivy-output
                     docker run --rm \
                       -v /var/run/docker.sock:/var/run/docker.sock \
                       -v $(pwd):/app \
