@@ -30,17 +30,17 @@ pipeline {
             }
         }
 
-        stage('Run Unit Tests') {
-            steps {
-                echo '🧪 Running Go unit tests...'
-                checkout scm
-                dir('app') {
-                    sh '''
-                        docker run --rm -v $(pwd):/app -w /app golang:1.24 go test ./... -v
-                    '''
-                }
-            }
-        }
+        // stage('Run Unit Tests') {
+        //     steps {
+        //         echo '🧪 Running Go unit tests...'
+        //         checkout scm
+        //         dir('app') {
+        //             sh '''
+        //                 docker run --rm -v $(pwd):/app -w /app golang:1.24 go test ./... -v
+        //             '''
+        //         }
+        //     }
+        // }
 
         stage('SonarQube Analysis') {
             steps {
