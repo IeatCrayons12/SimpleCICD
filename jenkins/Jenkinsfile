@@ -76,7 +76,7 @@ pipeline {
                     mkdir -p trivy-output
                     docker run --rm \
                       -v /var/run/docker.sock:/var/run/docker.sock \
-                      -v $(pwd):/app \
+                      -v $(pwd)/trivy-output:/root/reports \
                       aquasec/trivy image goapp:latest \
                       --exit-code 0 \
                       --format table \
