@@ -37,6 +37,7 @@ pipeline {
             }
             steps {
                 echo '🧪 Running Go unit tests...'
+                checkout scm
                 dir('app') {
                     sh 'go test ./... -v'
                 }
@@ -46,17 +47,19 @@ pipeline {
         stage('OWASP Dependency Check') {
             steps {
                 echo '🔍 Running OWASP Dependency Check...'
-                dir('app') {
-                    sh '''
+                withCredentials([string(credentialsId: 'nvd-api-key-owasp', variable: 'NVD_API_KEY')]) {
+                    sh """
                         docker run --rm \
-                          -v $PWD:/src \
-                          -v $PWD/odc-reports:/report \
+                          -v \$PWD/app:/src \
+                          -v \$PWD/app/odc-reports:/report \
+                          -v \$PWD/odc-data:/usr/share/dependency-check/data \
                           owasp/dependency-check \
                           --project "goapp" \
                           --scan /src \
                           --format HTML \
-                          --out /report
-                    '''
+                          --out /report \
+                          --nvdApiKey \$NVD_API_KEY
+                    """
                 }
                 archiveArtifacts artifacts: 'app/odc-reports/**/*.html', fingerprint: true
             }
@@ -67,13 +70,13 @@ pipeline {
                 echo '📊 Running SonarQube static code analysis...'
                 dir('app') {
                     withSonarQubeEnv("${SONARQUBE_ENV}") {
-                        sh '''
+                        sh """
                             sonar-scanner \
                               -Dsonar.projectKey=go_project \
                               -Dsonar.sources=. \
-                              -Dsonar.host.url=$SONAR_HOST_URL \
-                              -Dsonar.login=$SONAR_AUTH_TOKEN
-                        '''
+                              -Dsonar.host.url=\$SONAR_HOST_URL \
+                              -Dsonar.login=\$SONAR_AUTH_TOKEN
+                        """
                     }
                 }
             }
@@ -92,11 +95,11 @@ pipeline {
             steps {
                 echo '☁️ Pushing Docker image to DockerHub...'
                 withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh '''
-                        docker login -u $DOCKER_USER -p $DOCKER_PASS
-                        docker tag goapp:latest $DOCKER_USER/goapp:latest
-                        docker push $DOCKER_USER/goapp:latest
-                    '''
+                    sh """
+                        docker login -u \$DOCKER_USER -p \$DOCKER_PASS
+                        docker tag goapp:latest \$DOCKER_USER/goapp:latest
+                        docker push \$DOCKER_USER/goapp:latest
+                    """
                 }
             }
         }
@@ -105,10 +108,10 @@ pipeline {
             steps {
                 echo '🚀 Deploying to Kubernetes...'
                 dir('k8s') {
-                    sh '''
+                    sh """
                         kubectl apply -f deployment.yaml
                         kubectl apply -f service.yaml
-                    '''
+                    """
                 }
             }
         }
