@@ -44,6 +44,8 @@ pipeline {
             }
         }
 
+        //  OWASP Dependency-Check 
+        /*
         stage('OWASP Dependency Check') {
             steps {
                 echo '🔍 Running OWASP Dependency Check...'
@@ -62,6 +64,19 @@ pipeline {
                     """
                 }
                 archiveArtifacts artifacts: 'app/odc-reports/**/*.html', fingerprint: true
+            }
+        }
+        */
+
+        // ✅ Trivy Vulnerability Scan 
+        stage('Trivy Scan') {
+            steps {
+                echo '🛡️ Running Trivy vulnerability scan on Docker image...'
+                sh '''
+                    docker build -t goapp:latest ./app
+                    docker run --rm aquasec/trivy image goapp:latest --exit-code 0 --format table --output trivy-report.txt
+                '''
+                archiveArtifacts artifacts: 'trivy-report.txt', fingerprint: true
             }
         }
 
@@ -95,11 +110,11 @@ pipeline {
             steps {
                 echo '☁️ Pushing Docker image to DockerHub...'
                 withCredentials([usernamePassword(credentialsId: 'dockerhub', usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-                    sh """
-                        docker login -u \$DOCKER_USER -p \$DOCKER_PASS
-                        docker tag goapp:latest \$DOCKER_USER/goapp:latest
-                        docker push \$DOCKER_USER/goapp:latest
-                    """
+                    sh '''
+                        docker login -u $DOCKER_USER -p $DOCKER_PASS
+                        docker tag goapp:latest $DOCKER_USER/goapp:latest
+                        docker push $DOCKER_USER/goapp:latest
+                    '''
                 }
             }
         }
@@ -108,10 +123,10 @@ pipeline {
             steps {
                 echo '🚀 Deploying to Kubernetes...'
                 dir('k8s') {
-                    sh """
+                    sh '''
                         kubectl apply -f deployment.yaml
                         kubectl apply -f service.yaml
-                    """
+                    '''
                 }
             }
         }
