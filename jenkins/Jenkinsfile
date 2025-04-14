@@ -89,60 +89,56 @@ pipeline {
             }
         }
 
-        stage('Deploy Jenkins SA via Helm') {
+        stage('Bootstrap Service Account') {
             steps {
-                echo '🔐 Deploying ServiceAccount using Helm chart...'
-                   sh '''
-                      helm upgrade --install my-app ./charts/my-app \
-                      --set namespace=default
-                   '''
-                  }
+                echo '🔐 Bootstrapping Kubernetes ServiceAccount...'
+                sh '''
+                    export KUBECONFIG=/var/jenkins_home/kubeconfig.yaml
+                    kubectl apply -f k8s/jenkins-sa.yaml
+                '''
+            }
         }
 
         stage('Verify Helm & Cluster') {
             steps {
                 echo '🔍 Verifying Helm and Kubernetes connectivity...'
-                  sh '''
-                     # Check if Helm is installed
-                     if ! command -v helm > /dev/null; then
-                     echo "❌ Helm not found. Installing..."
-                     curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
-                     echo "✅ Helm installed."
-                     else
-                     echo "✔️ Helm already exists."
-                     helm version
-                     fi
+                sh '''
+                    if ! command -v helm > /dev/null; then
+                        echo "❌ Helm not found. Installing..."
+                        curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+                        echo "✅ Helm installed."
+                    else
+                        echo "✔️ Helm already exists."
+                        helm version
+                    fi
 
-                       # ✅ Install kubectl if missing
-                     if ! command -v kubectl > /dev/null; then
-                     echo "❌ kubectl not found. Installing..."
-                     curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
-                     chmod +x kubectl
-                     mv kubectl /usr/local/bin/
-                     echo "✅ kubectl installed."
-                     else
-                     echo "✔️ kubectl already exists."
-                     kubectl version --client
-                     fi
+                    if ! command -v kubectl > /dev/null; then
+                        echo "❌ kubectl not found. Installing..."
+                        curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/arm64/kubectl"
+                        chmod +x kubectl
+                        mv kubectl /usr/local/bin/
+                        echo "✅ kubectl installed."
+                    else
+                        echo "✔️ kubectl already exists."
+                        kubectl version --client
+                    fi
 
-                     # 🔍 Check if Jenkins can access the cluster
-                     echo "🌐 Checking cluster connectivity..."
-                     export KUBECONFIG=/var/jenkins_home/kubeconfig.yaml
-                     kubectl get nodes
-                  '''
+                    echo "🌐 Checking cluster connectivity..."
+                    export KUBECONFIG=/var/jenkins_home/kubeconfig.yaml
+                    kubectl get nodes
+                '''
             }
         }
-
 
         stage('Deploy to Helm') {
             steps {
                 echo '🚀 Deploying to Helm...'
-                    sh '''
+                sh '''
                     helm upgrade --install goapp charts/goapp \
                     --namespace default \
                     --create-namespace \
                     --wait
-                    '''
+                '''
             }
         }
     }
