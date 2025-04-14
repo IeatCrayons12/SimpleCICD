@@ -93,8 +93,28 @@ pipeline {
             steps {
                 echo '🔐 Bootstrapping Kubernetes ServiceAccount...'
                 sh '''
-                    export KUBECONFIG=/var/jenkins_home/kubeconfig.yaml
-                    kubectl apply -f k8s/jenkins-sa.yaml
+                      export KUBECONFIG=/var/jenkins_home/kubeconfig.yaml
+
+                    echo "📁 KUBECONFIG Path: $KUBECONFIG"
+                    echo "📋 Verifying current Kubernetes context..."
+                    kubectl config current-context || {
+                        echo "❌ Cannot get current Kubernetes context. Check kubeconfig." >&2
+                        exit 1
+                    }
+
+                    echo "📡 Checking Kubernetes cluster connectivity..."
+                    kubectl get nodes || {
+                        echo "❌ Cannot connect to cluster. Is the cluster running? Authenticated?" >&2
+                        exit 1
+                    }
+
+                    echo "📄 Applying service account YAML..."
+                    kubectl apply -f k8s/jenkins-sa.yaml || {
+                        echo "❌ Failed to apply ServiceAccount YAML." >&2
+                        exit 1
+                    }
+
+                    echo "✅ Service Account applied successfully."`
                 '''
             }
         }
