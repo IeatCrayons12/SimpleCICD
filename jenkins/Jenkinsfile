@@ -44,7 +44,7 @@ pipeline {
             }
         }
 
-        // 🔒 OWASP Dependency-Check (Kept for audit/history visibility)
+        // 🔒 OWASP Dependency-Check 
         // /*
         // stage('OWASP Dependency Check') {
         //     steps {
@@ -68,7 +68,7 @@ pipeline {
         // }
         // */
 
-        // ✅ Trivy Vulnerability Scan (Preferred for real-world pipelines)
+        // ✅ Trivy Vulnerability Scan 
         stage('Trivy Scan') {
             steps {
                 echo '🛡️ Running Trivy vulnerability scan on Docker image...'
