@@ -89,6 +89,28 @@ pipeline {
             }
         }
 
+        stage('Verify Helm & Cluster') {
+            steps {
+                echo '🔍 Verifying Helm and Kubernetes connectivity...'
+                  sh '''
+                     # Check if Helm is installed
+                     if ! command -v helm > /dev/null; then
+                     echo "❌ Helm not found. Installing..."
+                     curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+                     echo "✅ Helm installed."
+                     else
+                     echo "✔️ Helm already exists."
+                     helm version
+                     fi
+
+                     # Check if kubectl can reach the cluster
+                     kubectl version --client
+                     kubectl get nodes
+                  '''
+            }
+        }
+
+
         stage('Deploy to Helm') {
             steps {
                 echo '🚀 Deploying to Helm...'
