@@ -70,18 +70,23 @@ pipeline {
             steps {
                 echo '🛡️ Running Trivy vulnerability scan on Docker image...'
                 sh '''
-                   docker build -t goapp:latest ./app
-                   mkdir -p trivy-output
-                   mkdir -p docker-save
-                   docker save goapp:latest -o docker-save/goapp.tar
+                    docker build -t goapp:latest ./app
+                    mkdir -p docker-save
+                    mkdir -p trivy-output
 
-                   docker run --rm \
-                    -v $(pwd)/docker-save/goapp.tar:/goapp.tar \
-                    -v $(pwd)/trivy-output:/trivy-out \
-                    aquasec/trivy image --input /goapp.tar \
-                    --exit-code 0 \
-                    --format table \
-                    --output /trivy-out/trivy-report.txt
+                    # Save Docker image with full absolute path
+                    docker save goapp:latest -o $(pwd)/docker-save/goapp.tar
+
+                    # Verify it's a file
+                    ls -l $(pwd)/docker-save/goapp.tar
+
+                    docker run --rm \
+                     -v $(pwd)/docker-save/goapp.tar:/goapp.tar:ro \
+                     -v $(pwd)/trivy-output:/trivy-out \
+                     aquasec/trivy image --input /goapp.tar \
+                     --exit-code 0 \
+                     --format table \
+                     --output /trivy-out/trivy-report.txt
                 '''
                 archiveArtifacts artifacts: 'trivy-output/trivy-report.txt', fingerprint: true
             }
