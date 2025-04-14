@@ -92,6 +92,7 @@ pipeline {
             steps {
                 echo '🔍 Verifying Helm and Kubernetes connectivity...'
                 sh '''
+                    # 🪛 Install Helm if needed
                     if ! command -v helm > /dev/null; then
                         echo "❌ Helm not found. Installing..."
                         curl -sSL https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
@@ -100,15 +101,15 @@ pipeline {
                         helm version
                     fi
 
+                    # 🪛 Install kubectl if needed
                     if ! command -v kubectl > /dev/null; then
                         echo "❌ kubectl not found. Installing..."
                         ARCH=$(uname -m)
+                        ARCH_TYPE="amd64"
                         if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
                           ARCH_TYPE="arm64"
-                        else
-                          ARCH_TYPE="amd64"
                         fi
-                        VERSION=$(curl -L -s https://dl.k8s.io/release/stable.txt)
+                        VERSION=$(curl -sSL https://dl.k8s.io/release/stable.txt)
                         curl -LO https://dl.k8s.io/release/$VERSION/bin/linux/$ARCH_TYPE/kubectl
                         chmod +x kubectl && mv kubectl /usr/local/bin/
                         echo "✅ kubectl installed."
@@ -117,15 +118,18 @@ pipeline {
                         kubectl version --client
                     fi
 
+                    # ✅ Confirm KUBECONFIG is a file
                     echo "🧪 Checking if KUBECONFIG is a valid file..."
                     if [ ! -f "$KUBECONFIG" ]; then
                         echo "❌ ERROR: $KUBECONFIG is not a file (maybe a dir or missing)"
                         ls -ld "$KUBECONFIG"
+                        echo "💡 Tip: You may need to mount or copy kubeconfig into this path."
                         exit 1
                     else
                         echo "✅ KUBECONFIG looks good."
                     fi
 
+                    # 🌐 Test cluster connectivity
                     echo "🌐 Checking cluster connectivity..."
                     kubectl get nodes || {
                         echo "❌ Cannot connect to Kubernetes cluster!"
