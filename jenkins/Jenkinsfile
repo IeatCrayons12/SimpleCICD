@@ -44,55 +44,28 @@ pipeline {
             }
         }
 
-        // 🔒 (Optional) Preserved for future use or recruiter showcase
-        // stage('OWASP Dependency Check') {
+        // 🚫 Skipping Trivy for now
+        // stage('Trivy Scan') {
         //     steps {
-        //         echo '🔍 Running OWASP Dependency Check...'
-        //         withCredentials([string(credentialsId: 'nvd-api-key-owasp', variable: 'NVD_API_KEY')]) {
-        //             sh '''
-        //                 docker run --rm \
-        //                   -v $PWD/app:/src \
-        //                   -v $PWD/app/odc-reports:/report \
-        //                   -v $PWD/odc-data:/usr/share/dependency-check/data \
-        //                   owasp/dependency-check \
-        //                   --project "goapp" \
-        //                   --scan /src \
-        //                   --format HTML \
-        //                   --out /report \
-        //                   --nvdApiKey $NVD_API_KEY
-        //             '''
-        //         }
-        //         archiveArtifacts artifacts: 'app/odc-reports/**/*.html', fingerprint: true
+        //         echo '🛡️ Running Trivy vulnerability scan on Docker image...'
+        //         sh '''
+        //            docker build -t goapp:latest ./app
+        //            mkdir -p docker-save
+        //            mkdir -p trivy-output
+        //            rm -f docker-save/goapp.tar
+        //            docker save goapp:latest -o docker-save/goapp.tar
+        //            docker run --rm \
+        //              -v $(pwd)/docker-save/goapp.tar:/goapp.tar:ro \
+        //              -v $(pwd)/trivy-output:/trivy-out \
+        //              aquasec/trivy image \
+        //              --input /goapp.tar \
+        //              --exit-code 0 \
+        //              --format table \
+        //              --output /trivy-out/trivy-report.txt
+        //         '''
+        //         archiveArtifacts artifacts: 'trivy-output/trivy-report.txt', fingerprint: true
         //     }
         // }
-
-        stage('Trivy Scan') {
-            steps {
-                echo '🛡️ Running Trivy vulnerability scan on Docker image...'
-                sh '''
-                   docker build -t goapp:latest ./app
-
-                   # Clean slate
-                   mkdir -p docker-save
-                   mkdir -p trivy-output
-                   rm -f docker-save/goapp.tar  # Just in case
-
-                   # ✅ Save image as a FILE, NOT a directory
-                   docker save goapp:latest -o docker-save/goapp.tar
-
-                   # ✅ Run Trivy with correct file mount (read-only)
-                   docker run --rm \
-                    -v $(pwd)/docker-save/goapp.tar:/goapp.tar:ro \
-                    -v $(pwd)/trivy-output:/trivy-out \
-                    aquasec/trivy image \
-                    --input /goapp.tar \
-                    --exit-code 0 \
-                    --format table \
-                    --output /trivy-out/trivy-report.txt
-                '''
-                archiveArtifacts artifacts: 'trivy-output/trivy-report.txt', fingerprint: true
-            }
-        }
 
         stage('SonarQube Analysis') {
             steps {
