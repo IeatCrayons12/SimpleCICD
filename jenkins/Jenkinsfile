@@ -6,6 +6,7 @@ pipeline {
     }
 
     stages {
+
         stage('Checkout') {
             steps {
                 echo '🧹 Cleaning workspace before fresh checkout...'
@@ -50,15 +51,16 @@ pipeline {
                 dir('app') {
                     withSonarQubeEnv("${SONARQUBE_ENV}") {
                         sh '''
+                            pwd
                             docker run --rm \
-                                -v $(pwd):/usr/src \
-                                -w /usr/src \
-                                sonarsource/sonar-scanner-cli \
-                                sonar-scanner \
-                                -Dsonar.projectKey=go_project \
-                                -Dsonar.sources=. \
-                                -Dsonar.host.url=$SONAR_HOST_URL \
-                                -Dsonar.login=$SONAR_AUTH_TOKEN
+                              -v $(pwd):/usr/src \
+                              -w /usr/src \
+                              sonarsource/sonar-scanner-cli \
+                              sonar-scanner \
+                              -Dsonar.projectKey=go_project \
+                              -Dsonar.sources=. \
+                              -Dsonar.host.url=http://host.docker.internal:9000 \
+                              -Dsonar.login=$SONAR_AUTH_TOKEN
                         '''
                     }
                 }
