@@ -2,28 +2,29 @@ version: '3.8'
 
 services:
   jenkins:
-   image: jenkins/jenkins:lts
-   container_name: jenkins
-   user: root
-   ports:
-   - "8080:8080" #Web ui jenkins
-   - "50000:50000" #Agent port
-   volumes:
-   - jenkins_home:/var/jenkins_home
-   - ~/.kube:/root/.kube          # To access local K8s cluster
-   - /var/run/docker.sock:/var/run/docker.sock  # So Jenkins can run Docker commands 
-  
+    image: jenkins/jenkins:lts
+    container_name: jenkins
+    user: root
+    ports:
+      - "8080:8080"        # Jenkins Web UI
+      - "50000:50000"      # Agent port
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - ~/.kube:/root/.kube                              # Optional: if Jenkins needs full kube folder
+      - ~/.kube/config:/var/jenkins_home/kubeconfig.yaml # ✅ Required: kubeconfig path
+      - /var/run/docker.sock:/var/run/docker.sock        # Allow Docker access from Jenkins
+
   sonarqube:
     image: sonarqube:latest
     container_name: sonarqube
     ports:
-     - "9000:9000"
+      - "9000:9000"
     environment:
-     - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
+      - SONAR_ES_BOOTSTRAP_CHECKS_DISABLE=true
     volumes:
-     - sonarqube_data:/opt/sonarqube/data
-     - sonarqube_extensions:/opt/sonarqube/extensions
-     - sonarqube_logs:/opt/sonarqube/logs
+      - sonarqube_data:/opt/sonarqube/data
+      - sonarqube_extensions:/opt/sonarqube/extensions
+      - sonarqube_logs:/opt/sonarqube/logs
 
 volumes:
   jenkins_home:
