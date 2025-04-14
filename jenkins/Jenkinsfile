@@ -45,28 +45,26 @@ pipeline {
         }
 
         // 🔒 (Optional) Preserved for future use or recruiter showcase
-        // /*
         // stage('OWASP Dependency Check') {
         //     steps {
         //         echo '🔍 Running OWASP Dependency Check...'
         //         withCredentials([string(credentialsId: 'nvd-api-key-owasp', variable: 'NVD_API_KEY')]) {
-        //             sh """
+        //             sh '''
         //                 docker run --rm \
-        //                   -v \$PWD/app:/src \
-        //                   -v \$PWD/app/odc-reports:/report \
-        //                   -v \$PWD/odc-data:/usr/share/dependency-check/data \
+        //                   -v $PWD/app:/src \
+        //                   -v $PWD/app/odc-reports:/report \
+        //                   -v $PWD/odc-data:/usr/share/dependency-check/data \
         //                   owasp/dependency-check \
         //                   --project "goapp" \
         //                   --scan /src \
         //                   --format HTML \
         //                   --out /report \
-        //                   --nvdApiKey \$NVD_API_KEY
-        //             """
+        //                   --nvdApiKey $NVD_API_KEY
+        //             '''
         //         }
         //         archiveArtifacts artifacts: 'app/odc-reports/**/*.html', fingerprint: true
         //     }
         // }
-        // */
 
         stage('Trivy Scan') {
             steps {
@@ -80,9 +78,9 @@ pipeline {
                       aquasec/trivy image goapp:latest \
                       --exit-code 0 \
                       --format table \
-                      --output trivy-report.txt
+                      --output /root/reports/trivy-report.txt
                 '''
-                archiveArtifacts artifacts: 'trivy-report.txt', fingerprint: true
+                archiveArtifacts artifacts: 'trivy-output/trivy-report.txt', fingerprint: true
             }
         }
 
@@ -91,13 +89,13 @@ pipeline {
                 echo '📊 Running SonarQube static code analysis...'
                 dir('app') {
                     withSonarQubeEnv("${SONARQUBE_ENV}") {
-                        sh """
+                        sh '''
                             sonar-scanner \
                               -Dsonar.projectKey=go_project \
                               -Dsonar.sources=. \
-                              -Dsonar.host.url=\$SONAR_HOST_URL \
-                              -Dsonar.login=\$SONAR_AUTH_TOKEN
-                        """
+                              -Dsonar.host.url=$SONAR_HOST_URL \
+                              -Dsonar.login=$SONAR_AUTH_TOKEN
+                        '''
                     }
                 }
             }
@@ -138,4 +136,3 @@ pipeline {
         }
     }
 }
-
